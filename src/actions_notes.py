@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from address_book import AddressBook
 from custom_console import print_to_console
 from error_handlers import NotFoundWarning, input_error
 from notes import NoteBook
@@ -49,13 +50,15 @@ def show_notes(notes_book: "NoteBook") -> None:
 
 
 @input_error
-def show_notes_contact(name: str, notes_book: "NoteBook") -> None:
+def show_notes_contact(args, notes_book: "NoteBook") -> None:
     """Shows all notes from the notes dictionary.
 
     param: notes_book: Notes dictionary to read from.
     return: str: Result message.
     """
-    notes_table(notes_book.show_all_for_contact(name))
+    name = args[0]
+    note = notes_book.show_all_for_contact(name)
+    notes_table(note)
 
 
 @input_error
@@ -92,7 +95,7 @@ def remove_tag(args: list[str], notes_book: "NoteBook") -> None:
 
 
 @input_error
-def attach_note(args: list[str], notes_book: "NoteBook") -> None:
+def attach_note(args: list[str], address_book: "AddressBook", notes_book: "NoteBook") -> None:
     """Attaches a note to a contact in the notes dictionary.
 
     param: args: List with 2 values: note title and contact name.
@@ -100,49 +103,52 @@ def attach_note(args: list[str], notes_book: "NoteBook") -> None:
     return: str: Result message.
     """
 
-    note_title, contact_name = args
-    note_in_notebook = notes_book.find(note_title)
-    if not note_in_notebook:
-        raise NotFoundWarning(f"Note with title '{note_title}' not found.")
-    notes_book.attach_to_contact(note_title, contact_name)
-    print_to_console(f"Note {note_in_notebook} attached to-{note_in_notebook.contacts}.", style=OutputStyle.SUCCESS)
+    note_title = args[0]
+    contact_name = args[1]
+    contact = address_book.find(contact_name)
+    note = notes_book.find(note_title)
+    if not contact or not note:
+        raise NotFoundWarning(f"Contact with name '{contact_name}' or note with title '{note_title}' not found.")
+
+    note_with_contact = notes_book.attach_to_contact(note_title, contact_name)
+    contact.add_note(note_title)
+    print_to_console(f"Note {note_with_contact.title} attached to contact {contact_name}.", style=OutputStyle.SUCCESS)
 
 
-def search_notes(query: str, notes_book: "NoteBook") -> None:
+def search_notes(args: list[str], notes_book: "NoteBook") -> None:
     """Searches for notes containing the query in their title or body.
 
     param: query: str: The query to search for.
     param: notes_book: Notes dictionary to read from.
     return: str: Result message.
     """
-
+    query = args[0]
     search_results = notes_book.search(query)
     notes_table(search_results)
 
 
-def delete_note(note_title: str, notes_book: "NoteBook") -> None:
+def delete_note(args: list[str], notes_book: "NoteBook") -> None:
     """Deletes a note from the notes dictionary.
 
     param: note_title: str: The title of the note to delete.
     param: notes_book: Notes dictionary to modify.
     return: str: Result message.
     """
+    note_title = args[0]
 
     if note_in_notebook := notes_book.find(note_title):
         notes_book.delete(note_title)
-
         print_to_console(f"Note {note_in_notebook.title} deleted.")
-    raise NotFoundWarning(f"Note with title '{note_title}' not found.")
 
 
-def find_by_tag(tag: str, notes_book: "NoteBook") -> list[str]:
+def find_by_tag(args: list[str], notes_book: "NoteBook") -> list[str]:
     """Finds all notes with a specific tag.
 
     param: tag: str.
     param: notes_book: Notes dictionary to read from.
     return: list: Result message.
     """
-
+    tag = args[0]
     notes_table(notes_book.find_by_tag(tag))
 
 
@@ -166,14 +172,12 @@ def add_note(args: list[str], notes_book: "NoteBook") -> None:
     return: str: Result message.
     """
 
-    name = args[0]
-    note = " ".join(args[1 : len(args)])
+    note_title: str = args[0]
+    note_body = " ".join(args[1:])
 
-    note_title: str = f"note-{len(notes_book.values()) + 1}"
-    notes_book.add(note_title, note)
-    notes_book.attach_to_contact(note_title, name)
+    new_note = notes_book.add(note_title, note_body)
+    note_table(new_note)
     print_to_console("Note added.")
-    note_table(notes_book.find(note_title))
 
 
 def notes_table(list_of_notes: list[str]) -> None:

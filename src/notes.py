@@ -71,12 +71,14 @@ class NoteBook(UserDict):
     ) -> None:
         """Add a new note to the notebook."""
         self.data[title] = Note(title, body, tags, contacts)
+        return self.data[title]
 
     def delete(self, title: str) -> None:
         """Delete a note from the notebook by title."""
         if not title in self.data:
             raise KeyError(f"Note with title {title} not found")
         del self.data[title]
+        return f"Note with title {title} deleted"
 
     def edit(self, title: str, new_body: str) -> None:
         """Edit the body of an existing note by adding new text to existing one."""
@@ -96,8 +98,8 @@ class NoteBook(UserDict):
         """Attach a note to a contact."""
         if not title in self.data:
             raise KeyError(f"Note with title {title} not found")
-
-        return self.data[title].attach_to_contact(contact_name)
+        self.data[title].attach_to_contact(contact_name)
+        return self.data[title]
 
     def search(self, query: str) -> List[Note]:
         """Search for notes containing the query in their title or body."""
@@ -127,9 +129,11 @@ class NoteBook(UserDict):
 
     def show_all_for_contact(self, contact_name: str) -> List[Note]:
         """Find all notes attached to a contact."""
-        if not any(contact_name in note.contacts for note in self.data.values()):
-            raise ValueError(f"No notes found for contact {contact_name}")
-        return [note for note in self.data.values() if contact_name in note.contacts]
+        notes = []
+        for note in self.data.values():
+            if contact_name in note.contacts:
+                notes.append(note)
+            return notes
 
     def find_by_tag(self, tag: str) -> List[Note]:
         """Find all notes with a specific tag."""

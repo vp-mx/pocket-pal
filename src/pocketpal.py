@@ -52,11 +52,16 @@ def main():
                     book = AddressBook()
                 if args[0] == "all" or args[0] == "notes":
                     notes = NoteBook()
+
                 continue
             if command_object.value.source == Source.ADDRESS_BOOK:
                 result = command_object.value.run(args, book) if args_len else command_object.value.run(book)
             elif command_object.value.source == Source.NOTES:
                 result = command_object.value.run(args, notes) if args_len else command_object.value.run(notes)
+            elif command_object.value.source == Source.ALL:
+                result = (
+                    command_object.value.run(args, book, notes) if args_len else command_object.value.run(book, notes)
+                )
             elif command_object.value.source == Source.APP:
                 result = command_object.value.run(args) if args_len else command_object.value.run()
             else:

@@ -114,7 +114,7 @@ class Record:
         """
         self.name = Name(name.strip())
         self.phones: list[Phone] = []
-        self.__birthday: Optional[Birthday] = None
+        self.birthday_date: Optional[Birthday] = None
         self.__address: Optional[str] = None
         self.emails = []
         self.notes: Optional[list[str]] = []
@@ -147,7 +147,7 @@ class Record:
     @property
     def birthday(self) -> str:
         """The birthday of the contact."""
-        return str(self.__birthday) if self.__birthday else "N/A"
+        return str(self.birthday_date) if self.birthday_date else "N/A"
 
     def add_phone(self, phone: str) -> None:
         """Add a phone number to the contact.
@@ -198,7 +198,7 @@ class Record:
 
         :param birthday: The birthday to add.
         """
-        self.__birthday = Birthday(birthday)
+        self.birthday_date = Birthday(birthday)
 
     def add_address(self, address: str) -> None:
         """Add an address to the contact.
@@ -293,7 +293,7 @@ class AddressBook(UserDict):
         except KeyError as e:
             raise HelperError("Record not found") from e
 
-    def get_upcoming_birthdays(self, days_interval: int = 7) -> str:
+    def get_upcoming_birthdays(self, days_interval: int = 7) -> list[list[str]]:
         """Returns a list of upcoming birthdays within the next N days.
 
         When the birthday falls on a weekend, the congratulation date is moved to the next week.
@@ -301,11 +301,11 @@ class AddressBook(UserDict):
         :return: string with upcoming birthdays separated by newlines for each contact.
         """
         today = datetime.today().date()
-        contacts_with_birthdays = [record for record in self.values() if record.birthday is not None]
+        contacts_with_birthdays = [record for record in self.values() if record.birthday_date is not None]
         upcoming_birthdays = []
 
         for user in contacts_with_birthdays:
-            greet_date = user.birthday.value.replace(year=today.year)
+            greet_date = user.birthday_date.value.replace(year=today.year)
 
             if greet_date < today:
                 greet_date = greet_date.replace(year=today.year + 1)
@@ -315,8 +315,6 @@ class AddressBook(UserDict):
                 if greet_date.isoweekday() in (6, 7):
                     greet_date += timedelta(days=8 - greet_date.isoweekday())
                 congratulation_date = greet_date.strftime("%d.%m.%Y")
-                upcoming_birthdays.append(
-                    (f"Contact name: {user.name.value}, " f"congratulation date: {congratulation_date}")
-                )
+                upcoming_birthdays.append([user.name.value, congratulation_date])
 
-        return "\n".join(upcoming_birthdays) or f"No upcoming birthdays found in next {days_interval} days."
+        return upcoming_birthdays

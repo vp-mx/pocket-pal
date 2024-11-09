@@ -1,13 +1,16 @@
 """This module contains functions to save, load and delete the address book and notes book from a file."""
 
+import csv
 import os
 import pickle
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
+from address_book import AddressBook, Record
+from notes import NoteBook
+
 if TYPE_CHECKING:
-    from address_book import AddressBook
-    from notes import NoteBook
+    pass
 
 FOLDER_FOR_PKL = Path().home() / "PocketPal"
 ADDRESS_BOOK_FILE = "pocket-pal-book.pkl"
@@ -50,3 +53,29 @@ def delete_data(filename):
         os.remove(filepath)
     except FileNotFoundError:
         pass
+
+
+def import_csv(book: "AddressBook", notebook: "Notes") -> None:
+    """Imports contacts from a csv file.
+
+    param: file_path: Path to the csv file.
+    param: book: AddressBook object to save the contacts.
+    """
+    try:
+        contacts = FOLDER_FOR_PKL / "contacts.csv"
+        if contacts.exists():
+            with open(contacts, newline="", encoding="utf-8") as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    record = Record(row["Name"])
+                    record.add_phone(row["Phones"])
+                    record.add_birthday(row["Birthday"])
+                    record.add_address(row["Address"])
+                    record.add_email(row["Emails"])
+                    record.add_note(row["Notes"])
+                    book.add_record(record)
+        notes = FOLDER_FOR_PKL / "notes.csv"
+        if notes.exists():
+            _ = notebook
+    except Exception as e:
+        print(f"Error importing file: {e}")

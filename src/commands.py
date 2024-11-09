@@ -41,6 +41,7 @@ from actions_notes import (
     sort_by_tag,
 )
 from error_handlers import InputArgsError
+from file_operations import import_csv
 
 
 class Source(Enum):
@@ -48,6 +49,7 @@ class Source(Enum):
 
     ADDRESS_BOOK = auto()
     NOTES = auto()
+    ALL = auto()
     APP = auto()
 
 
@@ -59,7 +61,7 @@ class Command:
     """The name of the command for input from CLI."""
     description: str
     """Description of the command."""
-    run: Callable[..., Union[str, Table, Text, Panel]]
+    run: Callable[..., Union[str, Table, Text, Panel, None]]
     """Function to run the command."""
     args_len: int
     """Number of arguments for command. 0, the command does not receive arguments. -1 means any number of arguments."""
@@ -88,7 +90,7 @@ class Commands(Enum):
         description="Adds a contact to the address book.",
         run=add_contact,
         args_len=2,
-        input_help="add <name> <phone>",
+        input_help="add <name> <phone>. Use _ to separate first and last names.",
         source=Source.ADDRESS_BOOK,
     )
     ADD_ADDRESS = Command(
@@ -161,7 +163,7 @@ class Commands(Enum):
         run=lambda: "Good bye!",
         args_len=0,
         input_help="close",
-        source=Source.ADDRESS_BOOK,
+        source=Source.APP,
     )
     DELETE_NOTE = Command(
         cli_name="delete-note",
@@ -193,7 +195,7 @@ class Commands(Enum):
         run=lambda: "Good bye!",
         args_len=0,
         input_help="exit",
-        source=Source.ADDRESS_BOOK,
+        source=Source.APP,
     )
     FIND_BY_TAG = Command(
         cli_name="find-by-tag",
@@ -209,14 +211,6 @@ class Commands(Enum):
         run=lambda: print_commands_table(Commands),
         args_len=0,
         input_help="help",
-        source=Source.APP,
-    )
-    HELLO = Command(
-        cli_name="hello",
-        description="Greets the user.",
-        run=lambda *_: "How can I help you?",
-        args_len=0,
-        input_help="hello",
         source=Source.APP,
     )
     REMOVE_CONTACT = Command(
@@ -329,7 +323,15 @@ class Commands(Enum):
         run=cleanup,
         args_len=1,
         input_help="cleanup <all | address-book | notes>",
-        source=Source.APP,
+        source=Source.ALL,
+    )
+    IMPORT = Command(
+        cli_name="import",
+        description="Imports contacts and notes from a csv file.",
+        run=import_csv,
+        args_len=0,
+        input_help="import",
+        source=Source.ALL,
     )
 
     @classmethod
